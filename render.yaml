@@ -2,7 +2,9 @@ services:
   - name: twitterfromtemu
     type: web
     env: python
-    buildCommand: | 
+    buildCommand: |
+      python3 -m venv venv
+      source venv/bin/activate 
       cd ./frontend
       npm install
       npm run build
