@@ -2,15 +2,12 @@ services:
   - name: twitterfromtemu
     type: web
     env: python
-    buildCommand: |
-      python3 -m venv venv
-      source venv/bin/activate 
-      cd ./frontend
+    buildCommand: | 
+      cd frontend
       npm install
       npm run build
-      cd ../
-      cd ./backend
-      pip install -r requirements.txt
+      cd ..
+      pip install -r backend/requirements.txt
     startCommand: "gunicorn backend.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
