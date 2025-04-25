@@ -3,6 +3,7 @@ services:
     type: web
     env: python
     buildCommand: | 
+      echo "go fuck yourself render"
       cd frontend
       npm install
       npm run build
