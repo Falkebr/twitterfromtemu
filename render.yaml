@@ -1,16 +1,22 @@
 services:
-  - name: temu_twitter
+  - name: twitterfromtemu
     type: web
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    buildCommand: | 
+      cd ./frontend
+      npm install
+      npm run build
+      cd ../
+      cd ./backend
+      pip install -r requirements.txt
+    startCommand: "gunicorn backend.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: twitter_clone_nwoi
+          name: temu_twitterdb
           property: connectionString
       - key: SECRET_KEY
         sync: false  
 databases:
-  - name: twitter_clone_nwoi
+  - name: temu_twitterdb
     type: postgresql
