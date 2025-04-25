@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 gunicorn
+psycopg2
 sqlalchemy
 pymysql
 mysql-connector-python
