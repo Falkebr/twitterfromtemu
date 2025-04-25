@@ -42,7 +42,7 @@ export default function RegisterPage() {
 
             if(!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.message || 'Registration failed');
+                throw new Error(errData.message || 'Registration failed. NOOB');
             }
             navigate('/login');
         } catch (err) {
