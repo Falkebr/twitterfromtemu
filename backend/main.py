@@ -13,9 +13,13 @@ db_url = os.getenv("DATABASE_URL")
 secret_key = os.getenv("SECRET_KEY")
 
 app = FastAPI()
+origins = [
+    "https://twitterfromtemu-pi.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["no-cors"], # Erstatt "*" visst vi skal ha ett spesifikt domain (security measure for at andre applications ikkje kan bruke API'en)
+    allow_origins=origins,  # or ["*"] to allow all (not recommended for prod)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
