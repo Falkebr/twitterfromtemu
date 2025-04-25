@@ -3,7 +3,7 @@ services:
     type: web
     env: python
     buildCommand: | 
-      echo "go fuck yourself render"
+      echo "🌱 render.yaml is working!"
       cd frontend
       npm install
       npm run build
