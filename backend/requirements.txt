@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+mysql-connector-python
+python-dotenv
+alembic
+faker
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
