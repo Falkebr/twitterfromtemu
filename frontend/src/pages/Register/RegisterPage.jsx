@@ -32,7 +32,7 @@ export default function RegisterPage() {
         const { confirmPassword, ...cleanData } = formData;
 
         try {
-            const res = await fetch('http://localhost:8000/api/accounts', {
+            const res = await fetch('https://twitterfromtemu.onrender.com/api/accounts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
