@@ -95,4 +95,17 @@
 .feed__tweet__layout {
   display: flex;
   align-items: center;
+}
+.feed__tweet__like_button {
+  background-color: #1da1f2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.feed__tweet__like_button:hover {
+  background-color: #0d8ae6;
 }/*# sourceMappingURL=Feed.module.css.map */

@@ -4,6 +4,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 import sys
 import os
+from collections import defaultdict
+import time
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -21,6 +23,9 @@ def get_db():
         yield db
     finally: 
         db.close()
+
+# Batcher to store likes
+like_batcher = defaultdict(lambda: {"likes": 0, "time": time.time()})
 
 @router.get("/")
 def index(): 
@@ -124,3 +129,23 @@ def search_tweets(request: SearchRequest, db: Session = Depends(get_db)):
     if not tweets:
         raise HTTPException(status_code=404, detail="No tweets found")
     return tweets
+
+@router.post("/api/tweets/{tweet_id}/like")
+def like_tweet(tweet_id: int, db: Session = Depends(get_db)):
+    current_time = time.time()
+    if tweet_id in like_batcher:
+        like_batcher[tweet_id]["likes"] += 1
+        like_batcher[tweet_id]["time"] = current_time
+    else:
+        like_batcher[tweet_id] = {"likes": 1, "time": current_time}
+
+    # Check if batch should be sent to the database
+    if like_batcher[tweet_id]["likes"] > 10 or (current_time - like_batcher[tweet_id]["time"] > 60):
+        tweet = db.query(Tweet).filter(Tweet.id == tweet_id).first()
+        if not tweet:
+            raise HTTPException(status_code=404, detail="Tweet not found")
+        tweet.likes = (tweet.likes or 0) + like_batcher[tweet_id]["likes"]
+        db.commit()
+        del like_batcher[tweet_id]
+
+    return {"message": "Like added"}
