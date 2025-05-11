@@ -6,6 +6,14 @@ import sys
 import os
 from collections import defaultdict
 import time
+from backend.cachingsystem.cache import Cache
+from backend.likebatcher.likebatcher import like_batcher
+
+# Initializing cache functionality
+cache = Cache()
+
+# Start like batcher
+start_batcher()
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -34,6 +42,11 @@ def index():
 # Get all tweets
 @router.get("/api/tweets", response_model=List[tweet.TweetRead])
 def get_tweets(q: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    cache_key = f"tweets_{q}"
+    cached_tweets = cache.get(cache_key)
+    if cached_tweets:
+        return cached_tweets
+    # If not in cache, query the database
     query = db.query(Tweet).options(joinedload(Tweet.account))
 
     if q:
@@ -44,6 +57,8 @@ def get_tweets(q: Optional[str] = Query(None), db: Session = Depends(get_db)):
     if not tweets:
         raise HTTPException(status_code=404, detail="No tweets found")
 
+    # Cache the result
+    cache.set(cache_key, tweets)
     return tweets
 
 

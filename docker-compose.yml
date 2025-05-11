@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  api:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  cache1:
+    build:
+      context: ./backend/cachingsystem
+    ports:
+      - "5000:5000"
+  cache2:
+    build:
+      context: ./backend/cachingsystem
+    ports:
+      - "5001:5000"
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: twitter
+  load_balancer:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - api
+      - cache1
+      - cache2
