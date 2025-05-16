@@ -12,7 +12,7 @@ export default function Feed() {
         const token = localStorage.getItem("token");
     
         if (token) {
-            fetch('https://twitterfromtemu.onrender.com/api/accounts/me', {
+            fetch('http://localhost:8000/api/accounts/me', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -26,7 +26,7 @@ export default function Feed() {
         }
     
         // Fetch all accounts for the feed
-        fetch('https://twitterfromtemu.onrender.com/api/accounts')
+        fetch('http://localhost:8000/api/accounts')
             .then(res => res.json())
             .then(data => {
                 //setAccounts(data);
@@ -63,7 +63,7 @@ export default function Feed() {
             ?.map(tag => tag.slice(1)) // Remove the '#' symbol
             || [];
     
-        fetch('https://twitterfromtemu.onrender.com/api/tweets', {
+        fetch('http://localhost:8000/api/tweets', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export default function Feed() {
 
         if (!token) return;
 
-        fetch(`https://twitterfromtemu.onrender.com/api/tweets/${tweetId}/like`, {
+        fetch(`http://localhost:8000/api/tweets/${tweetId}/like`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

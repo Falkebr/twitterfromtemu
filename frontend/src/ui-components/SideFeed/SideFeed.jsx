@@ -11,7 +11,7 @@ export default function SideFeed() {
     const onSearch = async (searchQuery) => {
         try {
             // Fetch accounts matching the query
-            const accountsRes = await fetch(`https://twitterfromtemu.onrender.com/api/accounts/search`, {
+            const accountsRes = await fetch(`http://localhost:8000/api/accounts/search`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: searchQuery }),
@@ -19,7 +19,7 @@ export default function SideFeed() {
             const accountsData = await accountsRes.json();
 
             // Fetch hashtags matching the query
-            const hashtagsRes = await fetch(`https://twitterfromtemu.onrender.com/api/hashtags/search`, {
+            const hashtagsRes = await fetch(`http://localhost:8000/api/hashtags/search`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: searchQuery }),
@@ -27,7 +27,7 @@ export default function SideFeed() {
             const hashtagsData = await hashtagsRes.json();
 
             // Fetch tweets matching the query
-            const tweetsRes = await fetch(`https://twitterfromtemu.onrender.com/api/tweets/search`, {
+            const tweetsRes = await fetch(`http://localhost:8000/api/tweets/search`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: searchQuery }),

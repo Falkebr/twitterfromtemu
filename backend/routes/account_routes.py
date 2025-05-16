@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Form, APIRouter
+from fastapi import FastAPI, HTTPException, Depends, Form, APIRouter, Request
 from typing import List
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
@@ -79,8 +79,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 # Create account
 @router.post("/api/accounts", response_model=AccountRead)
-def create_account(account: AccountCreate, db: Session = Depends(get_db)):
-    app.state.logs.append("DB Access: Create account")
+def create_account(account: AccountCreate, db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append("DB Access: Create account")
     hashed_pw = hash_password(account.password)
 
     new_account = Account(

@@ -8,7 +8,7 @@ export default function SideMenu() {
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
-            fetch('https://twitterfromtemu.onrender.com/api/accounts/me', {
+            fetch('http://localhost:8000/api/accounts/me', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

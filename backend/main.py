@@ -15,12 +15,12 @@ secret_key = os.getenv("SECRET_KEY")
 
 app = FastAPI()
 origins = [
-    "https://twitterfromtemu-pi.vercel.app",
+    "localhost:5173",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # or ["*"] to allow all (not recommended for prod)
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

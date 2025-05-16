@@ -9,7 +9,7 @@ export default function PrivateFeed() {
 
     useEffect(() => {
         if (username) {
-            fetch(`https://twitterfromtemu.onrender.com/api/accounts/${username}`)
+            fetch(`http://localhost:8000/api/accounts/${username}`)
                 .then(res => res.json())
                 .then(data => {
                     setAccount(data);
@@ -29,7 +29,7 @@ export default function PrivateFeed() {
     const handleDelete = async (accountId, tweetId) => {
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`https://twitterfromtemu.onrender.com/api/${accountId}/tweets/${tweetId}`,  {
+            const response = await fetch(`http://localhost:8000/api/${accountId}/tweets/${tweetId}`,  {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`

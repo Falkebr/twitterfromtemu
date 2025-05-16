@@ -19,7 +19,7 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            const res = await fetch('https://twitterfromtemu.onrender.com/api/accounts/login', {
+            const res = await fetch('http://localhost:8000/api/accounts/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

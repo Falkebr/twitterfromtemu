@@ -7,7 +7,7 @@ import os
 from collections import defaultdict
 import time
 from backend.cachingsystem.cache import Cache
-from backend.likebatcher.likebatcher import like_batcher
+from backend.likebatcher.likebatcher import like_batcher, start_batcher
 
 # Initializing cache functionality
 cache = Cache()
@@ -31,9 +31,6 @@ def get_db():
         yield db
     finally: 
         db.close()
-
-# Batcher to store likes
-like_batcher = defaultdict(lambda: {"likes": 0, "time": time.time()})
 
 @router.get("/")
 def index(): 
