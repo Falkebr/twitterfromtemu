@@ -15,12 +15,12 @@ secret_key = os.getenv("SECRET_KEY")
 
 app = FastAPI()
 origins = [
-    "localhost:5173",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
