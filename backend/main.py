@@ -14,9 +14,6 @@ db_url = os.getenv("DATABASE_URL")
 secret_key = os.getenv("SECRET_KEY")
 
 app = FastAPI()
-origins = [
-    "localhost:5173",
-]
 
 app.add_middleware(
     CORSMiddleware,

@@ -97,11 +97,12 @@ def create_account(account: AccountCreate, db: Session = Depends(get_db), reques
 # Login with username
 @router.post("/api/accounts/login")
 def login(
+    request: Request,
     username: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    app.state.logs.append("DB Access: Login attempt")
+    request.app.state.logs.append("DB Access: Login attempt")
     user = auth_user(db, username, password)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
@@ -114,8 +115,8 @@ def login(
 
 # Get all accounts
 @router.get("/api/accounts")
-def get_all_accounts(db: Session = Depends(get_db)):
-    app.state.logs.append("DB Access: Fetch all accounts")
+def get_all_accounts(db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append("DB Access: Fetch all accounts")
     accounts = db.query(Account).all()
     return [
         {
@@ -131,8 +132,8 @@ def get_all_accounts(db: Session = Depends(get_db)):
 
 # Search accounts
 @router.post("/api/accounts/search", response_model=List[AccountRead])
-def search_accounts(request: SearchRequest, db: Session = Depends(get_db)):
-    app.state.logs.append(f"DB Access: Search accounts with query '{request.query}'")
+def search_accounts(request: SearchRequest, db: Session = Depends(get_db), req: Request = None):
+    req.app.state.logs.append(f"DB Access: Search accounts with query '{request.query}'")
     accounts = db.query(Account).filter(
         Account.username.ilike(f"%{request.query}%") | Account.email.ilike(f"%{request.query}%")
     ).all()
@@ -142,8 +143,8 @@ def search_accounts(request: SearchRequest, db: Session = Depends(get_db)):
 
 # Get current logged-in user's data
 @router.get("/api/accounts/me", response_model=AccountRead)
-def get_current_account(current_user: Account = Depends(get_current_user), db: Session = Depends(get_db)):
-    app.state.logs.append("DB Access: Fetch current user's account")
+def get_current_account(current_user: Account = Depends(get_current_user), db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append("DB Access: Fetch current user's account")
     user = db.query(Account).filter(Account.username == current_user.username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -151,8 +152,8 @@ def get_current_account(current_user: Account = Depends(get_current_user), db: S
 
 # Get account by username
 @router.get("/api/accounts/{username}", response_model=AccountRead)
-def get_account(username: str, db: Session = Depends(get_db)):
-    app.state.logs.append(f"DB Access: Fetch account with username '{username}'")
+def get_account(username: str, db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append(f"DB Access: Fetch account with username '{username}'")
     account = db.query(Account).filter(Account.username == username).first()
 
     if not account:
