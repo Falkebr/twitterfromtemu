@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Query, Path  , APIRouter
+from fastapi import FastAPI, HTTPException, Depends, Query, Path, APIRouter, Request
 from typing import Optional, List
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -161,3 +161,37 @@ def like_tweet(tweet_id: int, db: Session = Depends(get_db)):
         del like_batcher[tweet_id]
 
     return {"message": "Like added"}
+
+@router.post("/api/tweets", response_model=tweet.TweetRead)
+def create_tweet(
+    tweet_data: tweet.TweetCreate,
+    db: Session = Depends(get_db),
+    request: Request = None,
+    current_account: Account = Depends(get_current_user)
+):
+    # Create new Tweet instance
+    new_tweet = Tweet(
+        content=tweet_data.content,
+        account_id=current_account.id
+    )
+    db.add(new_tweet)
+    db.flush()  # Get new_tweet.id before committing
+
+    # Handle hashtags
+    if tweet_data.hashtags:
+        for tag in tweet_data.hashtags:
+            hashtag = db.query(Hashtag).filter(Hashtag.tag == tag).first()
+            if not hashtag:
+                hashtag = Hashtag(tag=tag)
+                db.add(hashtag)
+            new_tweet.hashtags.append(hashtag)
+
+    # Handle media
+    if tweet_data.media:
+        for url in tweet_data.media:
+            new_media = Media(url=url, media_type="image", tweet=new_tweet)
+            db.add(new_media)
+
+    db.commit()
+    db.refresh(new_tweet)
+    return new_tweet
