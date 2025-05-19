@@ -12,4 +12,4 @@ COPY requirements.txt /backend/requirements.txt
 RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
 
 # Set the command to run the logger
-CMD ["python", "logger.py"]
+CMD ["uvicorn", "logger:app", "--host", "0.0.0.0", "--port", "8001"]

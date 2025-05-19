@@ -1,11 +1,20 @@
 import time
+import requests
 from threading import Thread
 from collections import defaultdict
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend.models import Tweet
 
+LOGGER_URL = "http://logger:8001/log"
+
 like_batcher = defaultdict(lambda: {"likes": 0, "time": time.time()})
+
+def log_db_access(message):
+    try:
+        requests.post(LOGGER_URL, json={"message": f"DB Access: {message}"})
+    except Exception as e:
+        print(f"Failed to log to logger service: {e}")
 
 def add_like(tweet_id: int):
     current_time = time.time()
@@ -23,7 +32,9 @@ def flush_likes():
                     if tweet:
                         tweet.likes = (tweet.likes or 0) + data["likes"]
                         db.commit()
-                    del like_batcher[tweet_id]
+                        log_db_access(f"Flushed {data['likes']} likes to tweet {tweet_id}")
+                    # Safely remove the key if it exists
+                    like_batcher.pop(tweet_id, None)
 
 def start_batcher():
     thread = Thread(target=flush_likes, daemon=True)
