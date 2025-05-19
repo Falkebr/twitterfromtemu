@@ -1,6 +1,7 @@
 import styles from './LoginPage.module.css';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { login } from '../../services/api'
 
 export default function LoginPage() {
     const [formData, setFormData] = useState({ username: '', password: '' });
@@ -19,27 +20,16 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            const res = await fetch('http://localhost/api/accounts/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    username: formData.username,
-                    password: formData.password
-                }),
+            // call your centralized login() helper
+            const { access_token } = await login({
+                username: formData.username,
+                password: formData.password
             });
 
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.message || 'Login failed');
-            }
-
-            const data = await res.json();
-            localStorage.setItem('token', data.access_token);
-
-            navigate('/'); // Redirect to home or feed
+            localStorage.setItem('token', access_token);
+            navigate('/');  // go to feed/home
         } catch (err) {
+            // login() throws with a useful message if it fails
             setError(err.message);
         }
     };

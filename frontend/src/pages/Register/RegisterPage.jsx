@@ -1,6 +1,7 @@
 import styles from './RegisterPage.module.css';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createAccount } from '../../services/api';
 
 export default function RegisterPage() {
     const [error, setError] = useState(null)
@@ -25,28 +26,20 @@ export default function RegisterPage() {
         e.preventDefault();
 
         if (formData.password !== formData.confirmPassword) {
-            setError("Passwords don't match");
-            return;
+        setError("Passwords don't match");
+        return;
         }
 
+        // strip out confirmPassword before sending
         const { confirmPassword, ...cleanData } = formData;
 
         try {
-            const res = await fetch('http://localhost/api/accounts', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(cleanData),
-            });
-
-            if(!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.message || 'Registration failed. NOOB');
-            }
-            navigate('/login');
+        // call api.js helper instead of fetch
+        await createAccount(cleanData);
+        navigate('/login');
         } catch (err) {
-            setError(err.message);
+        // createAccount() will throw with status/text baked in
+        setError(err.message);
         }
     };
 

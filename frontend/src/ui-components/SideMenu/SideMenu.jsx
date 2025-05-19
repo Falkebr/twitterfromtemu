@@ -1,32 +1,16 @@
 import { useState, useEffect } from 'react';
 import styles from './SideMenu.module.css';
 import { Link } from 'react-router-dom';
+import { getCurrentUser } from '../../services/api'; 
 
 export default function SideMenu() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            fetch('http://localhost/api/accounts/me', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error("Failed to fetch user");
-                }
-                return res.json();
-            })
-            .then(data => {
-                setUser(data);
-            })
-            .catch(err => {
-                console.error('Error fetching user data:', err);
-            });
-        }
+    // load current user (if logged in)
+    getCurrentUser()
+      .then(setUser)
+      .catch(() => { /* no-op if not authenticated */ });
     }, []);
 
     return (

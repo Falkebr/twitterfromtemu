@@ -1,38 +1,40 @@
-const BASE_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+const BASE_BACKEND_URL = 'http://localhost';
 const API_ROOT = `${BASE_BACKEND_URL}/api`;	
 
 // This function is used to make API requests to the backend server.
 async function request(path, {
-    method = 'GET',
-    body = null,
-    needAuth = false,
-    headers = {},
-} ={}) {
-    const url = `${API_ROOT}${path}`;
-    const opts = {method, headers: {...headers}};
+  method    = 'GET',
+  body      = null,
+  needAuth  = false,
+  headers   = {},
+  ignore404 = false,
+} = {}) {
+  const url  = `${API_ROOT}${path}`;
+  const opts = { method, headers: { ...headers } };
 
-    if (needAuth) {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            throw new Error('No token found');
-        }
-        opts.headers['Authorization'] = `Bearer ${token}`;
-    }
-    if (body !== null) {
-        opts.headers['Content-Type'] = 'application/json';
-        opts.body = JSON.stringify(body);
-    }
+  if (needAuth) {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error('No token found');
+    opts.headers.Authorization = `Bearer ${token}`;
+  }
+  if (body != null) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
 
-    const res = await fetch(url, opts);
-    if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Request failed: ${res.status} ${res.statusText} - ${errorText}`);
-    }
+  const res = await fetch(url, opts);
 
-    if (res.status === 204) {
-        return null; // No content
+  if (!res.ok) {
+    // swallow 404 → []
+    if (ignore404 && res.status === 404) {
+      return [];
     }
-    return res.json();
+    // otherwise blow up
+    const txt = await res.text();
+    throw new Error(`Request failed: ${res.status} ${res.statusText} – ${txt}`);
+  }
+
+  return res.status === 204 ? null : res.json();
 }
 
 // ACCOUNTS
@@ -117,22 +119,23 @@ export const likeTweet = (tweetId) =>
 // SEARCH
 
 // Search for accounts
-export const searchAccounts = (query) => 
-    request('/accounts/search', {
-        method: 'POST',
-        body: { query }
-    });
+export const searchAccounts = (q) =>
+  request('/accounts/search', {
+    method:    'POST',
+    body:      { query: q },
+    ignore404: true,      // ← returns [] on 404
+  });
 
-// Search for hashtags
-export const searchHashtags = (query) => 
-    request('/hashtags/search', {
-        method: 'POST',
-        body: { query }
-    });
+export const searchHashtags = (q) =>
+  request('/hashtags/search', {
+    method:    'POST',
+    body:      { query: q },
+    ignore404: true,
+  });
 
-// Search for tweets
-export const searchTweets = (query) => 
-    request('/tweets/search', {
-        method: 'POST',
-        body: { query }
-    });
+export const searchTweets = (q) =>
+  request('/tweets/search', {
+    method:    'POST',
+    body:      { query: q },
+    ignore404: true,
+  });
