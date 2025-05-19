@@ -137,8 +137,6 @@ def search_accounts(request: SearchRequest, db: Session = Depends(get_db), req: 
     accounts = db.query(Account).filter(
         Account.username.ilike(f"%{request.query}%") | Account.email.ilike(f"%{request.query}%")
     ).all()
-    if not accounts:
-        raise HTTPException(status_code=404, detail="No accounts found")
     return accounts
 
 # Get current logged-in user's data
