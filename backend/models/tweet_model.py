@@ -11,6 +11,7 @@ class Tweet(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(ZoneInfo('UTC')))
+    likes = Column(Integer, default=0)
 
     account_id = Column(Integer, ForeignKey('accounts.id'), nullable=False)
     account = relationship("Account", back_populates="tweets")

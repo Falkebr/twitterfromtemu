@@ -20,6 +20,7 @@ class TweetRead(TweetBase):
     id: int
     created_at: datetime
     account: AccountMinimal
+    likes: int = 0
     hashtags: List[HashtagRead] = []
     media: List[MediaRead] = []
     

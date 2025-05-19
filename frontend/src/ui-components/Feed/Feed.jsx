@@ -12,7 +12,7 @@ export default function Feed() {
         const token = localStorage.getItem("token");
     
         if (token) {
-            fetch('http://localhost:8000/api/accounts/me', {
+            fetch('http://localhost/api/accounts/me', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -26,7 +26,7 @@ export default function Feed() {
         }
     
         // Fetch all accounts for the feed
-        fetch('http://localhost:8000/api/accounts')
+        fetch('http://localhost/api/accounts')
             .then(res => res.json())
             .then(data => {
                 //setAccounts(data);
@@ -63,7 +63,7 @@ export default function Feed() {
             ?.map(tag => tag.slice(1)) // Remove the '#' symbol
             || [];
     
-        fetch('http://localhost:8000/api/tweets', {
+        fetch('http://localhost/api/tweets', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -108,6 +108,31 @@ export default function Feed() {
         if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
         return `${Math.floor(diff / 86400)}d`;
     }    
+
+    function handleLike(tweetId) {
+        const token = localStorage.getItem("token");
+
+        if (!token) return;
+
+        fetch(`http://localhost/api/tweets/${tweetId}/like`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`Failed to like tweet: ${res.statusText}`);
+            }
+            return res.json();
+        })
+        .then(updatedTweet => {
+            setAllTweets(prevTweets => prevTweets.map(tweet => 
+                tweet.id === updatedTweet.id ? { ...tweet, likes: updatedTweet.likes } : tweet
+            ));
+        })
+        .catch(err => console.error('Error liking tweet:', err));
+    }
 
     return (
         <div className={styles.feed}>
@@ -175,6 +200,10 @@ export default function Feed() {
                                 <div>
                                     <p className={styles.feed__tweet__user__post}>{tweet.content}</p>
                                 </div>
+                                <div>
+                                    <button onClick={() => handleLike(tweet.id)} className={styles.feed__tweet__like_button}>Like</button>
+                                    <span>{tweet.likes || 0} Likes</span>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -183,78 +212,3 @@ export default function Feed() {
         </div>
     );
 }
-
-{/* SORT BY CREATED_AT */}
-{/* 
-import styles from './Feed.module.css';
-import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-
-export default function Feed() {
-    const [accounts, setAccounts] = useState([]);
-    const [allTweets, setAllTweets] = useState([]);
-
-    useEffect(() => {
-        fetch('http://localhost:8000/api/accounts')
-            .then(res => res.json())
-            .then(data => {
-                setAccounts(data);
-
-                // Flatten and sort tweets
-                const tweets = data
-                    .flatMap(account => 
-                        account.tweets?.map(tweet => ({
-                            ...tweet,
-                            accountUsername: account.username,
-                            accountHandle: account.handle
-                        })) || []
-                    )
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // most recent first
-
-                setAllTweets(tweets);
-            })
-            .catch(err => console.error('Error fetching accounts:', err));
-    }, []);
-
-    return (
-        <div className={styles.feed}>
-
-            <div className={styles.feed__post}>
-                
-                </div>
-
-                <div>
-                    <div className={styles.feed__tweet}>
-                        {allTweets.map((tweet, index) => (
-                            <div key={index} className={styles.feed__tweet__user}>
-                                <div>
-                                    <img 
-                                        src="../../../public/npcwojak.png" alt="profilepic"
-                                        className={styles.feed__tweet__user__img} 
-                                    />
-                                </div>
-                                <div className={styles.feed__tweet__user__info}>
-                                    <div className={styles.feed__tweet__layout}>
-                                        <Link 
-                                            to={`/${tweet.accountUsername}/profile`}
-                                            className={styles.feed__tweet__user__info__name}
-                                        >
-                                            {tweet.accountUsername}
-                                        </Link>
-                                        <p className={styles.feed__tweet__user__info__handle}>@{tweet.accountHandle}</p>
-                                        <p className={styles.feed__tweet__user__info__timestamp}>- {Math.floor(Math.random() * 10)}h</p>
-                                    </div>
-                                    <div>
-                                        <p className={styles.feed__tweet__user__post}>{tweet.content}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-    
-            </div>
-        );
-    }
-       
-*/}

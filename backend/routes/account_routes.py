@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Form, APIRouter
+from fastapi import FastAPI, HTTPException, Depends, Form, APIRouter, Request
 from typing import List
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
@@ -79,7 +79,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 # Create account
 @router.post("/api/accounts", response_model=AccountRead)
-def create_account(account: AccountCreate, db: Session = Depends(get_db)):
+def create_account(account: AccountCreate, db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append("DB Access: Create account")
     hashed_pw = hash_password(account.password)
 
     new_account = Account(
@@ -96,10 +97,12 @@ def create_account(account: AccountCreate, db: Session = Depends(get_db)):
 # Login with username
 @router.post("/api/accounts/login")
 def login(
+    request: Request,
     username: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    request.app.state.logs.append("DB Access: Login attempt")
     user = auth_user(db, username, password)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
@@ -112,7 +115,8 @@ def login(
 
 # Get all accounts
 @router.get("/api/accounts")
-def get_all_accounts(db: Session = Depends(get_db)):
+def get_all_accounts(db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append("DB Access: Fetch all accounts")
     accounts = db.query(Account).all()
     return [
         {
@@ -128,7 +132,8 @@ def get_all_accounts(db: Session = Depends(get_db)):
 
 # Search accounts
 @router.post("/api/accounts/search", response_model=List[AccountRead])
-def search_accounts(request: SearchRequest, db: Session = Depends(get_db)):
+def search_accounts(request: SearchRequest, db: Session = Depends(get_db), req: Request = None):
+    req.app.state.logs.append(f"DB Access: Search accounts with query '{request.query}'")
     accounts = db.query(Account).filter(
         Account.username.ilike(f"%{request.query}%") | Account.email.ilike(f"%{request.query}%")
     ).all()
@@ -138,8 +143,8 @@ def search_accounts(request: SearchRequest, db: Session = Depends(get_db)):
 
 # Get current logged-in user's data
 @router.get("/api/accounts/me", response_model=AccountRead)
-def get_current_account(current_user: Account = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Fetch user data using the current logged-in user (who is decoded from the token)
+def get_current_account(current_user: Account = Depends(get_current_user), db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append("DB Access: Fetch current user's account")
     user = db.query(Account).filter(Account.username == current_user.username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -147,7 +152,8 @@ def get_current_account(current_user: Account = Depends(get_current_user), db: S
 
 # Get account by username
 @router.get("/api/accounts/{username}", response_model=AccountRead)
-def get_account(username: str, db: Session = Depends(get_db)):
+def get_account(username: str, db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append(f"DB Access: Fetch account with username '{username}'")
     account = db.query(Account).filter(Account.username == username).first()
 
     if not account:
@@ -172,64 +178,3 @@ def get_account(username: str, db: Session = Depends(get_db)):
         ],
     }
     return response
-
-# Post tweet (requires authentication)
-@router.post("/api/tweets", response_model=TweetRead)
-def post_tweet(
-    tweet: TweetCreate, 
-    db: Session = Depends(get_db), 
-    current_user: Account = Depends(get_current_user)
-):
-    account = db.query(Account).filter(Account.id == current_user.id).first()
-
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-
-    # Create the tweet
-    new_tweet = Tweet(
-        content=tweet.content,
-        account_id=account.id
-    )
-
-    # Handle hashtags
-    if tweet.hashtags:
-        hashtag_objects = []
-        for tag in tweet.hashtags:
-            hashtag = db.query(Hashtag).filter(Hashtag.tag == tag).first()
-            if not hashtag:
-                hashtag = Hashtag(tag=tag)
-                db.add(hashtag)
-            hashtag_objects.append(hashtag)
-        new_tweet.hashtags = hashtag_objects
-    
-    # Handle media (optional)
-    if tweet.media:
-        media_objects = [Media(url=media_url, media_type="image") for media_url in tweet.media]
-        new_tweet.media = media_objects
-
-    # Save the new tweet to the database
-    db.add(new_tweet)
-    db.commit()
-    db.refresh(new_tweet)
-
-    return new_tweet
-
-# Owner of account deletes own account
-@router.delete("/api/accounts/{account_id}", status_code=200)
-def delete_account(account_id: int, password: str, db: Session = Depends(get_db), current_user: Account = Depends(get_current_user)):
-
-    if current_user.id != account_id:
-        raise HTTPException(status_code=403, detail="You are not authorized to delete this account")
-
-    account = db.query(Account).filter(Account.id == account_id).first()
-
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-    
-    if not verify_password(password, account.password):
-        raise HTTPException(status_code=403, detail="Incorrect password")
-    
-    db.delete(account)
-    db.commit()
-
-    return {"message": "Account deleted successfully"}

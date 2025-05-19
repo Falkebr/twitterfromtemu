@@ -78,7 +78,7 @@ def main():
         accounts = create_accounts(db)
         hashtags = create_hashtags(db)
         create_tweets_with_media(db, accounts, hashtags)
-        print("✅ Seed completed successfully.")
+        print("Seed completed successfully.")
     finally:
         db.close()
 

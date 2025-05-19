@@ -1,9 +1,19 @@
-from fastapi import FastAPI, HTTPException, Depends, Query, Path  , APIRouter
+from fastapi import FastAPI, HTTPException, Depends, Query, Path, APIRouter, Request
 from typing import Optional, List
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 import sys
 import os
+from collections import defaultdict
+import time
+from backend.cachingsystem.cache import Cache
+from backend.likebatcher.likebatcher import like_batcher, start_batcher
+
+# Initializing cache functionality
+cache = Cache()
+
+# Start like batcher
+start_batcher()
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -29,6 +39,11 @@ def index():
 # Get all tweets
 @router.get("/api/tweets", response_model=List[tweet.TweetRead])
 def get_tweets(q: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    cache_key = f"tweets_{q}"
+    cached_tweets = cache.get(cache_key)
+    if cached_tweets:
+        return cached_tweets
+    # If not in cache, query the database
     query = db.query(Tweet).options(joinedload(Tweet.account))
 
     if q:
@@ -39,6 +54,8 @@ def get_tweets(q: Optional[str] = Query(None), db: Session = Depends(get_db)):
     if not tweets:
         raise HTTPException(status_code=404, detail="No tweets found")
 
+    # Cache the result
+    cache.set(cache_key, tweets)
     return tweets
 
 
@@ -124,3 +141,57 @@ def search_tweets(request: SearchRequest, db: Session = Depends(get_db)):
     if not tweets:
         raise HTTPException(status_code=404, detail="No tweets found")
     return tweets
+
+@router.post("/api/tweets/{tweet_id}/like")
+def like_tweet(tweet_id: int, db: Session = Depends(get_db)):
+    current_time = time.time()
+    if tweet_id in like_batcher:
+        like_batcher[tweet_id]["likes"] += 1
+        like_batcher[tweet_id]["time"] = current_time
+    else:
+        like_batcher[tweet_id] = {"likes": 1, "time": current_time}
+
+    # Check if batch should be sent to the database
+    if like_batcher[tweet_id]["likes"] > 10 or (current_time - like_batcher[tweet_id]["time"] > 60):
+        tweet = db.query(Tweet).filter(Tweet.id == tweet_id).first()
+        if not tweet:
+            raise HTTPException(status_code=404, detail="Tweet not found")
+        tweet.likes = (tweet.likes or 0) + like_batcher[tweet_id]["likes"]
+        db.commit()
+        del like_batcher[tweet_id]
+
+    return {"message": "Like added"}
+
+@router.post("/api/tweets", response_model=tweet.TweetRead)
+def create_tweet(
+    tweet_data: tweet.TweetCreate,
+    db: Session = Depends(get_db),
+    request: Request = None,
+    current_account: Account = Depends(get_current_user)
+):
+    # Create new Tweet instance
+    new_tweet = Tweet(
+        content=tweet_data.content,
+        account_id=current_account.id
+    )
+    db.add(new_tweet)
+    db.flush()  # Get new_tweet.id before committing
+
+    # Handle hashtags
+    if tweet_data.hashtags:
+        for tag in tweet_data.hashtags:
+            hashtag = db.query(Hashtag).filter(Hashtag.tag == tag).first()
+            if not hashtag:
+                hashtag = Hashtag(tag=tag)
+                db.add(hashtag)
+            new_tweet.hashtags.append(hashtag)
+
+    # Handle media
+    if tweet_data.media:
+        for url in tweet_data.media:
+            new_media = Media(url=url, media_type="image", tweet=new_tweet)
+            db.add(new_media)
+
+    db.commit()
+    db.refresh(new_tweet)
+    return new_tweet

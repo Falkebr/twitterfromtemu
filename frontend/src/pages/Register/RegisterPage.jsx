@@ -32,7 +32,7 @@ export default function RegisterPage() {
         const { confirmPassword, ...cleanData } = formData;
 
         try {
-            const res = await fetch('http://localhost:8000/api/accounts', {
+            const res = await fetch('http://localhost/api/accounts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export default function RegisterPage() {
 
             if(!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.message || 'Registration failed');
+                throw new Error(errData.message || 'Registration failed. NOOB');
             }
             navigate('/login');
         } catch (err) {

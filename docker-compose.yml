@@ -1,0 +1,62 @@
+version: '3.8'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/twitter
+      - SECRET_KEY=summervacationwhen
+    depends_on:
+      - db
+      - likebatcher
+      - logger
+  cache1:
+    build:
+      context: ./backend/cachingsystem
+      dockerfile: Dockerfile
+    container_name: cache1
+    ports:
+      - "5000:5000"
+  cache2:
+    build:
+      context: ./backend/cachingsystem
+      dockerfile: Dockerfile
+    container_name: cache2
+    ports:
+      - "5001:5000"
+  likebatcher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "backend.likebatcher.likebatcher"]
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/twitter
+    depends_on:
+      - db
+  logger:
+    build:
+      context: ./backend/logger
+      dockerfile: Dockerfile
+    ports:
+      - "7000:7000"
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: twitter
+  load_balancer:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - api
+      - cache1
+      - cache2
+      - likebatcher
+      - logger
