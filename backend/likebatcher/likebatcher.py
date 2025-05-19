@@ -28,3 +28,12 @@ def flush_likes():
 def start_batcher():
     thread = Thread(target=flush_likes, daemon=True)
     thread.start()
+
+if __name__ == "__main__":
+    start_batcher()
+    print("Like batcher started and running...")
+    try:
+        while True:
+            time.sleep(60)
+    except KeyboardInterrupt:
+        print("Like batcher stopped.")
