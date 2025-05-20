@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import styles from './SideMenu.module.css';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../services/api'; 
 
 export default function SideMenu() {
     const [user, setUser] = useState(null);
+    const Navigate = useNavigate();
 
     useEffect(() => {
     // load current user (if logged in)
@@ -12,6 +13,13 @@ export default function SideMenu() {
       .then(setUser)
       .catch(() => { /* no-op if not authenticated */ });
     }, []);
+
+    // function to handle logout
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        setUser(null);
+        Navigate('/login');
+    };
 
     return (
         <div className={styles.menu__side}>
@@ -60,7 +68,7 @@ export default function SideMenu() {
                     </p>
                 </div>
                 <div className={styles.menu__side__user__button}>
-                    <button>...</button>
+                    <button onClick={handleLogout}>bye bye button</button>
                 </div>
             </div>
         </div>
