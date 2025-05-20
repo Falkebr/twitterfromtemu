@@ -1,7 +1,6 @@
 import os 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["SECRET_KEY"] = "testsecret"
-#DATABASE_URL = os.getenv("DATABASE_URL")
 
 from unittest.mock import MagicMock
 import pytest 
@@ -9,7 +8,6 @@ from fastapi.testclient import TestClient
 
 from backend.main import app 
 from backend.routes.tweet_routes import get_db 
-from backend.models import Hashtag, Account
 
 client = TestClient(app)
 
