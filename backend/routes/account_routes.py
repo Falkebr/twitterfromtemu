@@ -36,7 +36,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 # Database session dependency
-def get_db():
+def get_db(request: Request):
+    request.app.state.db_accesses += 1
     db = database.SessionLocal()
     try:
         yield db
@@ -80,7 +81,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 # Create account
 @router.post("/api/accounts", response_model=AccountRead)
 def create_account(account: AccountCreate, db: Session = Depends(get_db), request: Request = None):
-    request.app.state.logs.append("DB Access: Create account")
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Create account")
     hashed_pw = hash_password(account.password)
 
     new_account = Account(
@@ -102,7 +103,7 @@ def login(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    request.app.state.logs.append("DB Access: Login attempt")
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Login")
     user = auth_user(db, username, password)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
@@ -116,7 +117,7 @@ def login(
 # Get all accounts
 @router.get("/api/accounts")
 def get_all_accounts(db: Session = Depends(get_db), request: Request = None):
-    request.app.state.logs.append("DB Access: Fetch all accounts")
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Fetch all accounts")
     accounts = db.query(Account).all()
     return [
         {
@@ -142,7 +143,7 @@ def search_accounts(request: SearchRequest, db: Session = Depends(get_db), req: 
 # Get current logged-in user's data
 @router.get("/api/accounts/me", response_model=AccountRead)
 def get_current_account(current_user: Account = Depends(get_current_user), db: Session = Depends(get_db), request: Request = None):
-    request.app.state.logs.append("DB Access: Fetch current user's account")
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Fetch current user's account")
     user = db.query(Account).filter(Account.username == current_user.username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -151,7 +152,7 @@ def get_current_account(current_user: Account = Depends(get_current_user), db: S
 # Get account by username
 @router.get("/api/accounts/{username}", response_model=AccountRead)
 def get_account(username: str, db: Session = Depends(get_db), request: Request = None):
-    request.app.state.logs.append(f"DB Access: Fetch account with username '{username}'")
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Fetch account with username '{username}'")
     account = db.query(Account).filter(Account.username == username).first()
 
     if not account:
