@@ -7,7 +7,6 @@ async function request(path, {
   body      = null,
   needAuth  = false,
   headers   = {},
-  ignore404 = false,
 } = {}) {
   const url  = `${API_ROOT}${path}`;
   const opts = { method, headers: { ...headers } };
