@@ -1,7 +1,7 @@
 import styles from './PrivateFeed.module.css';
 import { Link, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getAccountByUsername, deleteTweet, editTweet } from '../../services/api';
+import { getAccountByUsername, deleteTweet, editTweet, getCurrentUser } from '../../services/api';
 
 // Utility to extract hashtags from text content
 const extractHashtags = (text) =>
@@ -10,6 +10,7 @@ const extractHashtags = (text) =>
 export default function PrivateFeed() {
   const { username } = useParams();
   const [account, setAccount] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [sortedTweets, setSortedTweets] = useState([]);
 
   // Track which tweet is being edited and draft content
@@ -18,6 +19,12 @@ export default function PrivateFeed() {
   useEffect(() => {
     if (!username) return;
 
+    // get the current user
+    getCurrentUser()
+      .then(user => setCurrentUser(user))
+      .catch(() => setCurrentUser(null));
+
+    // Fetch account data by username
     getAccountByUsername(username)
       .then(data => {
         setAccount(data);
@@ -31,6 +38,8 @@ export default function PrivateFeed() {
       })
       .catch(err => console.error('Error fetching account:', err));
   }, [username]);
+
+  const isOwner = currentUser?.id === account?.id;
 
   const startEdit = (tweet) => {
     setEditing({ id: tweet.id, content: tweet.content });
@@ -139,21 +148,25 @@ export default function PrivateFeed() {
                 <p className={styles.feed__tweet__user__info__handle}>@{account.handle}</p>
                 <p className={styles.feed__tweet__user__info__timestamp}>- {tweet.fakeHoursAgo}h</p>
 
-                <button
-                  className={styles.feed__tweet__user__info__delete}
-                  onClick={() => handleDelete(account.id, tweet.id)}
-                  title="Delete tweet"
-                >
-                  &#x1F5D1;
-                </button>
+                {isOwner && (
+                  <>
+                      <button
+                      className={styles.feed__tweet__user__info__delete}
+                      onClick={() => handleDelete(account.id, tweet.id)}
+                      title="Delete tweet"
+                    >
+                      &#x1F5D1;
+                    </button>
 
-                {editing.id === tweet.id ? (
-                  <> 
-                    <button onClick={() => saveEdit(tweet)}>Save</button>
-                    <button onClick={cancelEdit}>Cancel</button>
+                    {editing.id === tweet.id ? (
+                      <> 
+                        <button onClick={() => saveEdit(tweet)}>Save</button>
+                        <button onClick={cancelEdit}>Cancel</button>
+                      </>
+                    ) : (
+                      <button onClick={() => startEdit(tweet)}>Edit</button>
+                    )}
                   </>
-                ) : (
-                  <button onClick={() => startEdit(tweet)}>Edit</button>
                 )}
               </div>
 

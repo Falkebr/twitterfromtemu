@@ -33,5 +33,6 @@ class Tweet(Base):
             "id": self.id,
             "content": self.content,
             "created_at": int(self.created_at.timestamp() * 1000),
-            "account_id": self.account_id
+            "account_id": self.account_id,
+            "likes": self.likes or 0
         }
