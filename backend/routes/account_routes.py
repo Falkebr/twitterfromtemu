@@ -134,7 +134,7 @@ def get_all_accounts(db: Session = Depends(get_db), request: Request = None):
 # Search accounts
 @router.post("/api/accounts/search", response_model=List[AccountRead])
 def search_accounts(request: SearchRequest, db: Session = Depends(get_db), req: Request = None):
-    req.app.state.logs.append(f"DB Access: method='{request.method}' Search accounts with query '{request.query}'")
+    req.app.state.logs.append(f"DB Access: Search accounts with query '{request.query}'")
     accounts = db.query(Account).filter(
         Account.username.ilike(f"%{request.query}%") | Account.email.ilike(f"%{request.query}%")
     ).all()
