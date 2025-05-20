@@ -10,7 +10,8 @@ class LoggingRoute(APIRoute):
         async def log_request(request: Request):
             method = request.method
             path = request.url.path
-            app.state.logs.append(f"{method} {path}")
+            # Use request.app.state.logs to ensure correct app instance
+            request.app.state.logs.append(f"{method} {path}")
             return await original_route_handler(request)
 
         return log_request
