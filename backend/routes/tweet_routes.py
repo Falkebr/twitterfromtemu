@@ -135,13 +135,13 @@ def delete_tweets(request: Request, account_id: int, tweet_id: int, db: Session 
 # Search based on hashtags
 @router.post("/api/hashtags/search", response_model=List[HashtagRead])
 def search_hashtags(search: SearchRequest, db: Session = Depends(get_db), request: Request = None):
-    request.app.state.logs.append(f"DB Access: method='{request.method}' Search hashtags with query '{search.query}'")
+    request.app.state.logs.append(f"DB Access: Search hashtags with query '{search.query}'")
     hashtags = db.query(Hashtag).filter(Hashtag.tag.ilike(f"%{search.query}%")).all()
     return hashtags
 
 @router.post("/api/tweets/search", response_model=List[TweetRead])
 def search_tweets(search: SearchRequest, db: Session = Depends(get_db), request: Request = None):
-    request.app.state.logs.append(f"DB Access: method='{request.method}' Search tweets with query '{search.query}'")
+    request.app.state.logs.append(f"DB Access: Search tweets with query '{search.query}'")
     tweets = db.query(Tweet).options(joinedload(Tweet.account)).filter(Tweet.content.ilike(f"%{search.query}%")).all()
     return tweets
 
