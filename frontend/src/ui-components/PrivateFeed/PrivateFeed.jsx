@@ -1,7 +1,7 @@
 import styles from './PrivateFeed.module.css';
 import { Link, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getAccountByUsername, deleteTweet } from '../../services/api';
+import { getAccountByUsername, deleteTweet, editTweet } from '../../services/api';
 
 export default function PrivateFeed() {
     const { username } = useParams();
@@ -24,6 +24,20 @@ export default function PrivateFeed() {
         })
         .catch(err => console.error('Error fetching account:', err));
     }, [username]);
+
+    // Editing the tweet
+    const handleEdit = async (accountId, tweetId, newContent) => {
+        try {
+            // call helper instead of raw fetch
+            await editTweet(accountId, tweetId, { content: newContent });
+            setSortedTweets(prev => prev.map(tweet => 
+                tweet.id === tweetId ? { ...tweet, content: newContent } : tweet
+            ));
+        } catch (err) {
+            console.error('Error editing tweet:', err);
+            alert('Failed to edit tweet. You might not have permission.');
+        }
+    }
 
     const handleDelete = async (accountId, tweetId) => {
         try {
