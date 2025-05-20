@@ -7,6 +7,8 @@ WORKDIR /twitterfromtemu
 # Copy the entire backend directory into the container
 COPY . /twitterfromtemu
 
+COPY ./frontend/dist /usr/share/nginx/html
+
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 

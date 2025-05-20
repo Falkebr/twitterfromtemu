@@ -1,5 +1,5 @@
-const BASE_BACKEND_URL = 'http://localhost';
-const API_ROOT = `${BASE_BACKEND_URL}/api`;	
+const BASE_BACKEND_URL = '';
+const API_ROOT = `/api`;	
 
 // This function is used to make API requests to the backend server.
 async function request(path, {
