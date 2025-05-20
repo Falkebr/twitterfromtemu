@@ -75,8 +75,8 @@ def edit_tweets(request: Request, account_id: int, tweet_id: int, edit_tweet: tw
 
     tweet = (
         db.query(Tweet)
-          .filter(Tweet.id == tweet_id, Tweet.account_id == account_id)
-          .first()
+            .filter(Tweet.id == tweet_id, Tweet.account_id == account_id)
+            .first()
     )
     if not tweet:
         raise HTTPException(status_code=404, detail="The tweet you wanted to update was not found")
@@ -132,26 +132,17 @@ def delete_tweets(request: Request, account_id: int, tweet_id: int, db: Session 
 
     return {"message": "Tweet Deleted"}
 
-#@app.get("/api/tweets", response_model=tweet.TweetRead)
-#def get_tweet_containing_text(q: Optional[str] = Query(None), db: Session = Depends(get_db)):
-#    if q:
-#        tweets = db.query(Tweet).filter(Tweet.content.ilike(f"%{q}")).all()
-#    else:
-#        tweets = db.query(Tweet).all()
-#
-#    return tweets
-
 # Search based on hashtags
 @router.post("/api/hashtags/search", response_model=List[HashtagRead])
-def search_hashtags(request: SearchRequest, db: Session = Depends(get_db), req: Request = None):
-    req.app.state.logs.append(f"DB Access: method='{request.method}' Search hashtags with query '{request.query}'")
-    hashtags = db.query(Hashtag).filter(Hashtag.tag.ilike(f"%{request.query}%")).all()
+def search_hashtags(search: SearchRequest, db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Search hashtags with query '{search.query}'")
+    hashtags = db.query(Hashtag).filter(Hashtag.tag.ilike(f"%{search.query}%")).all()
     return hashtags
 
 @router.post("/api/tweets/search", response_model=List[TweetRead])
-def search_tweets(request: SearchRequest, db: Session = Depends(get_db), req: Request = None):
-    req.app.state.logs.append(f"DB Access: method='{request.method}' Search tweets with query '{request.query}'")
-    tweets = db.query(Tweet).options(joinedload(Tweet.account)).filter(Tweet.content.ilike(f"%{request.query}%")).all()
+def search_tweets(search: SearchRequest, db: Session = Depends(get_db), request: Request = None):
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Search tweets with query '{search.query}'")
+    tweets = db.query(Tweet).options(joinedload(Tweet.account)).filter(Tweet.content.ilike(f"%{search.query}%")).all()
     return tweets
 
 @router.post("/api/tweets/{tweet_id}/like")
