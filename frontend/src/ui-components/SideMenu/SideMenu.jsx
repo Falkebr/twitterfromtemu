@@ -68,7 +68,7 @@ export default function SideMenu() {
                     </p>
                 </div>
                 <div className={styles.menu__side__user__button}>
-                    <button onClick={handleLogout}>bye bye button</button>
+                    <button onClick={handleLogout}>Logout</button>
                 </div>
             </div>
         </div>

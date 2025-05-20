@@ -5,7 +5,8 @@
     display: flex;
     flex-direction: column;
     border: 1px solid $border;
-    max-width: 30rem;
+    max-width: 40rem;
+    min-width: 30rem;
     background-color: $card;
 
     &__post {
@@ -114,6 +115,21 @@
         &__layout {
             display: flex;
             align-items: center;
+        }
+
+        &__like_button {
+            background-color: $border;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.2rem;
+            margin: 0.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+
+            &:hover {
+                background-color: $notification;
+            }
         }
     }
 }

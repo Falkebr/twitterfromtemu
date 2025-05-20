@@ -78,5 +78,11 @@
 .menu__side__user__button > button {
   background: none;
   border: 0;
-  font-size: var(--font-xl);
+  font-size: var(--font-sm);
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+.menu__side__user__button > button:hover {
+  cursor: pointer;
+  opacity: 1;
 }/*# sourceMappingURL=SideMenu.module.css.map */

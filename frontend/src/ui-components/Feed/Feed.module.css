@@ -3,7 +3,8 @@
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(101, 119, 134, 0.368627451);
-  max-width: 30rem;
+  max-width: 40rem;
+  min-width: 30rem;
   background-color: rgba(22, 22, 22, 0.3882352941);
 }
 .feed__post {
@@ -97,15 +98,15 @@
   align-items: center;
 }
 .feed__tweet__like_button {
-  background-color: #1da1f2;
+  background-color: rgba(101, 119, 134, 0.368627451);
   color: white;
   border: none;
   border-radius: 5px;
-  padding: 0.5rem;
+  padding: 0.2rem;
+  margin: 0.2rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
-
 .feed__tweet__like_button:hover {
-  background-color: #0d8ae6;
+  background-color: #1da1f2;
 }/*# sourceMappingURL=Feed.module.css.map */
