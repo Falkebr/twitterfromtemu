@@ -27,6 +27,13 @@ services:
     container_name: cache2
     ports:
       - "5001:5000"
+  cache3:
+    build:
+      context: ./backend/cachingsystem
+      dockerfile: Dockerfile
+    container_name: cache3
+    ports:
+      - "5002:5000"
   likebatcher:
     build:
       context: .
