@@ -25,7 +25,8 @@ from sqlalchemy.orm import joinedload
 
 router = APIRouter()
 
-def get_db():
+def get_db(request: Request):
+    request.app.state.db_accesses += 1
     db = database.SessionLocal()
     try:
         yield db
@@ -38,7 +39,8 @@ def index():
 
 # Get all tweets
 @router.get("/api/tweets", response_model=List[tweet.TweetRead])
-def get_tweets(q: Optional[str] = Query(None), db: Session = Depends(get_db)):
+def get_tweets(request: Request, q: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Get all tweets")
     cache_key = f"tweets_{q}"
     cached_tweets = cache.get(cache_key)
     if cached_tweets:
@@ -61,7 +63,8 @@ def get_tweets(q: Optional[str] = Query(None), db: Session = Depends(get_db)):
 
 #Edit tweet
 @router.put("/api/{account_id}/tweets/{tweet_id}", response_model=tweet.TweetRead)
-def edit_tweets(account_id: int, tweet_id: int, edit_tweet: tweet.TweetUpdate, db: Session = Depends(get_db), current_account: Account = Depends(get_current_user)):
+def edit_tweets(request: Request, account_id: int, tweet_id: int, edit_tweet: tweet.TweetUpdate, db: Session = Depends(get_db), current_account: Account = Depends(get_current_user)):
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Edit tweet")
     tweet = db.query(Tweet).filter(Tweet.id == tweet_id, Tweet.account_id == account_id).first()
 
     if current_account.id != account_id:
@@ -114,8 +117,8 @@ def edit_tweets(account_id: int, tweet_id: int, edit_tweet: tweet.TweetUpdate, d
 
 # Delete tweet
 @router.delete("/api/{account_id}/tweets/{tweet_id}")
-def delete_tweets(account_id: int, tweet_id: int, db: Session = Depends(get_db), current_account: Account = Depends(get_current_user)):
-
+def delete_tweets(request: Request, account_id: int, tweet_id: int, db: Session = Depends(get_db), current_account: Account = Depends(get_current_user)):
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Delete tweet")
     if current_account.id != account_id:
         raise HTTPException(status_code=403, detail="You don't have access to post, edit, or delete tweets on this account")
     
@@ -140,21 +143,20 @@ def delete_tweets(account_id: int, tweet_id: int, db: Session = Depends(get_db),
 
 # Search based on hashtags
 @router.post("/api/hashtags/search", response_model=List[HashtagRead])
-def search_hashtags(request: SearchRequest, db: Session = Depends(get_db)):
-    query = request.query.strip()
-    if not query:
-        raise HTTPException(status_code=404, detail="No hashtags found")
-
+def search_hashtags(request: SearchRequest, db: Session = Depends(get_db), req: Request = None):
+    req.app.state.logs.append(f"DB Access: method='{request.method}' Search hashtags with query '{request.query}'")
     hashtags = db.query(Hashtag).filter(Hashtag.tag.ilike(f"%{request.query}%")).all()
     return hashtags
 
 @router.post("/api/tweets/search", response_model=List[TweetRead])
-def search_tweets(request: SearchRequest, db: Session = Depends(get_db)):
+def search_tweets(request: SearchRequest, db: Session = Depends(get_db), req: Request = None):
+    req.app.state.logs.append(f"DB Access: method='{request.method}' Search tweets with query '{request.query}'")
     tweets = db.query(Tweet).options(joinedload(Tweet.account)).filter(Tweet.content.ilike(f"%{request.query}%")).all()
     return tweets
 
 @router.post("/api/tweets/{tweet_id}/like")
-def like_tweet(tweet_id: int, db: Session = Depends(get_db)):
+def like_tweet(request: Request, tweet_id: int, db: Session = Depends(get_db)):
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Like tweet")
     current_time = time.time()
     if tweet_id in like_batcher:
         like_batcher[tweet_id]["likes"] += 1
@@ -180,6 +182,7 @@ def create_tweet(
     request: Request = None,
     current_account: Account = Depends(get_current_user)
 ):
+    request.app.state.logs.append(f"DB Access: method='{request.method}' Post tweet")
     # Create new Tweet instance
     new_tweet = Tweet(
         content=tweet_data.content,
