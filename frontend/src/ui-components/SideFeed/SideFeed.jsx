@@ -2,46 +2,34 @@ import styles from './SideFeed.module.css';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SearchBar from '../Search/SearchBar';
+import { 
+    searchAccounts, 
+    searchHashtags, 
+    searchTweets 
+} from '../../services/api'; 
 
 export default function SideFeed() {
-    const [accounts, setAccounts] = useState([]);
-    const [hashtags, setHashtags] = useState([]);
-    const [tweets, setTweets] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [hashtags, setHashtags] = useState([]);
+  const [tweets, setTweets]     = useState([]);
 
-    const onSearch = async (searchQuery) => {
-        try {
-            // Fetch accounts matching the query
-            const accountsRes = await fetch(`http://localhost/api/accounts/search`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: searchQuery }),
-            });
-            const accountsData = await accountsRes.json();
+  const onSearch = async (q) => {
+    // exactly like your original, but using the helpers:
+    try {
+      const accountsData = await searchAccounts(q);
+      const hashtagsData = await searchHashtags(q);
+      const tweetsData   = await searchTweets(q);
 
-            // Fetch hashtags matching the query
-            const hashtagsRes = await fetch(`http://localhost/api/hashtags/search`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: searchQuery }),
-            });
-            const hashtagsData = await hashtagsRes.json();
-
-            // Fetch tweets matching the query
-            const tweetsRes = await fetch(`http://localhost/api/tweets/search`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: searchQuery }),
-            });
-            const tweetsData = await tweetsRes.json();
-
-            // Update state with the results
-            setAccounts(Array.isArray(accountsData) ? accountsData : []);
-            setHashtags(Array.isArray(hashtagsData) ? hashtagsData : []);
-            setTweets(Array.isArray(tweetsData) ? tweetsData : []);
-        } catch (err) {
-            console.error('Error during search:', err);
-        }
-    };
+      setAccounts(Array.isArray(accountsData) ? accountsData : []);
+      setHashtags(Array.isArray(hashtagsData) ? hashtagsData : []);
+      setTweets(Array.isArray(tweetsData)     ? tweetsData     : []);
+    } catch (err) {
+      // this will only fire on non-404 errors
+      console.error('Error during search:', err);
+      // and we still fall through, but you might choose to:
+      // setAccounts([]); setHashtags([]); setTweets([]);
+    }
+  };
 
     return (
         <div className={styles.SideFeed}>

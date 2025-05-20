@@ -1,6 +1,7 @@
 import styles from './PrivateFeed.module.css';
 import { Link, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { getAccountByUsername, deleteTweet } from '../../services/api';
 
 export default function PrivateFeed() {
     const { username } = useParams();
@@ -8,47 +9,32 @@ export default function PrivateFeed() {
     const [sortedTweets, setSortedTweets] = useState([]);
 
     useEffect(() => {
-        if (username) {
-            fetch(`http://localhost/api/accounts/${username}`)
-                .then(res => res.json())
-                .then(data => {
-                    setAccount(data);
+        if (!username) return;
 
-                    const tweetsWithTime = (data.tweets || []).map(tweet => ({
-                        ...tweet,
-                        fakeHoursAgo: Math.floor(Math.random() * 10)
-                    }));
+        getAccountByUsername(username)
+        .then(data => {
+            setAccount(data);
 
-                    const sorted = tweetsWithTime.sort((a, b) => a.fakeHoursAgo - b.fakeHoursAgo);
-                    setSortedTweets(sorted);
-                })
-                .catch(err => console.error('Error fetching account:', err));
-        }
+            const tweetsWithTime = (data.tweets || []).map(tweet => ({
+                ...tweet,
+                fakeHoursAgo: Math.floor(Math.random() * 10),
+            }));
+            const sorted = tweetsWithTime.sort((a, b) => a.fakeHoursAgo - b.fakeHoursAgo);
+            setSortedTweets(sorted);
+        })
+        .catch(err => console.error('Error fetching account:', err));
     }, [username]);
 
     const handleDelete = async (accountId, tweetId) => {
-        const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`http://localhost/api/${accountId}/tweets/${tweetId}`,  {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-            });
-    
-            if (!response.ok) {
-                throw new Error(`Failed to delete tweet: ${response.statusText}`);
-            }
-    
-            const deletedTweet = await response.json();
-    
-            // Remove tweet from UI
-            setSortedTweets(prev => prev.filter(tweet => tweet.id !== deletedTweet.id));
-        } catch (error) {
-            console.error('Error deleting tweet:', error);
+            // call helper instead of raw fetch
+            await deleteTweet(accountId, tweetId);
+            setSortedTweets(prev => prev.filter(tweet => tweet.id !== tweetId));
+        } catch (err) {
+            console.error('Error deleting tweet:', err);
             alert('Failed to delete tweet. You might not have permission.');
         }
-    };    
+    };
 
     if (!account) {
         return <p>Loading...</p>;
