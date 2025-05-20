@@ -132,17 +132,53 @@
   color: white;
   opacity: 0.4;
 }
-.feed__tweet__user__info__delete {
-  margin-left: auto;
-  cursor: pointer;
-  background-color: #000000;
-  border: none;
-}
 .feed__tweet__user__post {
   font-size: var(--font-sm);
 }
 .feed__tweet__layout {
   width: auto;
   display: flex;
+}
+.feed__tweet__layout__girth {
+  margin-left: auto;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
   align-items: center;
+}
+.feed__tweet__layout__girth__delete {
+  background: none;
+  border: none;
+  font-size: var(--font-xl);
+}
+.feed__tweet__layout__girth__delete:hover {
+  cursor: pointer;
+}
+.feed__tweet__layout__girth__edit {
+  font-size: var(--font-base);
+  background: none;
+  border: none;
+}
+.feed__tweet__layout__girth__edit:hover {
+  cursor: pointer;
+}
+.feed__tweet__layout__girth__edit__textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(101, 119, 134, 0.368627451);
+  background-color: #000000;
+  color: #e1e8ed;
+  font-size: var(--font-sm);
+  resize: none;
+}
+.feed__tweet__layout__girth__edit__buttones {
+  font-size: var(--font-base);
+  background: none;
+  border: 1px solid rgba(101, 119, 134, 0.368627451);
+  padding: 0.2rem;
+  border-radius: 0.5rem;
+}
+.feed__tweet__layout__girth__edit__buttones:hover {
+  cursor: pointer;
 }/*# sourceMappingURL=PrivateFeed.module.css.map */

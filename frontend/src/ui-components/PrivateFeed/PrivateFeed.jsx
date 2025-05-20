@@ -149,9 +149,9 @@ export default function PrivateFeed() {
                 <p className={styles.feed__tweet__user__info__timestamp}>- {tweet.fakeHoursAgo}h</p>
 
                 {isOwner && (
-                  <>
+                  <div className={styles.feed__tweet__layout__girth}>
                       <button
-                      className={styles.feed__tweet__user__info__delete}
+                      className={styles.feed__tweet__layout__girth__delete}
                       onClick={() => handleDelete(account.id, tweet.id)}
                       title="Delete tweet"
                     >
@@ -160,19 +160,19 @@ export default function PrivateFeed() {
 
                     {editing.id === tweet.id ? (
                       <> 
-                        <button onClick={() => saveEdit(tweet)}>Save</button>
-                        <button onClick={cancelEdit}>Cancel</button>
+                        <button className={styles.feed__tweet__layout__girth__edit__buttones} onClick={() => saveEdit(tweet)}>Save</button>
+                        <button className={styles.feed__tweet__layout__girth__edit__buttones} onClick={cancelEdit}>Cancel</button>
                       </>
                     ) : (
-                      <button onClick={() => startEdit(tweet)}>Edit</button>
+                      <button className={styles.feed__tweet__layout__girth__edit} onClick={() => startEdit(tweet)}>Edit</button>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
 
               {editing.id === tweet.id ? (
                 <textarea
-                  className={styles.feed__tweet__user__post}
+                  className={styles.feed__tweet__layout__girth__edit__textarea}
                   value={editing.content}
                   onChange={e => setEditing(ed => ({ ...ed, content: e.target.value }))}
                 />

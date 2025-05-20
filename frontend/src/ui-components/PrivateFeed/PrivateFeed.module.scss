@@ -155,13 +155,6 @@
                     color: white;
                     opacity: 0.4;
                 }
-
-                &__delete{
-                    margin-left: auto;
-                    cursor: pointer; // optional: adds pointer on hover
-                    background-color: $background;
-                    border: none;
-                }
             }
             
             &__post {
@@ -172,7 +165,58 @@
         &__layout {
             width: auto;
             display: flex;
-            align-items: center;
+
+            &__girth {
+                margin-left: auto;
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                align-items: center;
+
+                &__delete {
+                    background: none;
+                    border: none;
+                    font-size: var(--font-xl);
+
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
+
+                &__edit {
+                    font-size: var(--font-base);
+                    background: none;
+                    border: none;
+
+                    &:hover {
+                        cursor: pointer;
+                    }
+
+                    &__textarea {
+                        width: 100%;
+                        padding: 0.5rem;
+                        border-radius: 0.5rem;
+                        border: 1px solid $border;
+                        background-color: $background;
+                        color: $text;
+                        font-size: var(--font-sm);
+                        resize: none;
+                    }
+
+                    &__buttones {
+                        font-size: var(--font-base);
+                        background: none;
+                        border: 1px solid $border;
+                        padding: 0.2rem;
+                        border-radius: 0.5rem;
+
+                        &:hover {
+                            cursor: pointer;
+                        }
+                    }
+                }
+            }
+            
         }
     }
 }
