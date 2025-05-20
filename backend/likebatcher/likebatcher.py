@@ -23,7 +23,6 @@ def add_like(tweet_id: int):
 
 def flush_likes():
     while True:
-        time.sleep(60)  # Check every minute
         current_time = time.time()
         with SessionLocal() as db:
             for tweet_id, data in list(like_batcher.items()):
@@ -35,6 +34,7 @@ def flush_likes():
                         log_db_access(f"Flushed {data['likes']} likes to tweet {tweet_id}")
                     # Safely remove the key if it exists
                     like_batcher.pop(tweet_id, None)
+        time.sleep(60)  # Check every minute
 
 def start_batcher():
     thread = Thread(target=flush_likes, daemon=True)
