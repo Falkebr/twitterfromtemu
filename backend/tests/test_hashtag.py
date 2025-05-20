@@ -22,19 +22,26 @@ def mock_db():
     mock_query = MagicMock()
     mock_session.query.return_value = mock_query 
 
-    # Simulate data
-    mock_hashtag1 = MagicMock()
-    mock_hashtag1.tag = "funny"
+    # Simulate data using a loop
+    tags = ["funny", "memes", "testing"]
+    mock_hashtags = []
+    for tag in tags:
+        mock_tag = MagicMock()
+        mock_tag.tag = tag
+        mock_hashtags.append(mock_tag)
 
-    mock_hashtag2 = MagicMock()
-    mock_hashtag2.tag = "memes"
+    # Simulate filtering (make hashtags case-insensitive)
+    def filter_side_effect(*args, **kwargs):
+        m = MagicMock()
 
-    mock_hashtag3 = MagicMock()
-    mock_hashtag3.tag = "testing"
+        def all_side_effect():
+            q = getattr(mock_session, "query_string", "").strip()
+            return [h for h in mock_hashtags if q.lower() in h.tag.lower()]
 
-    mock_query.filter.return_value.all.return_value = [
-        mock_hashtag1, mock_hashtag2, mock_hashtag3
-    ]
+        m.all.side_effect = all_side_effect
+        return m 
+
+    mock_query.filter.side_effect = filter_side_effect
 
     yield mock_session
 
@@ -42,21 +49,52 @@ def mock_db():
 def override_dependency(mock_db):
     # Reset the mock state before each test
     mock_db.reset_mock()
+    mock_db.query_string = ""
 
     def get_mock_db():
         yield mock_db
     app.dependency_overrides[get_db] = get_mock_db
 
-def test_search_hashtags_found():
-    response = client.post("/api/hashtags/search", json={"query": "fun"})
+# Positive test cases:
+@pytest.mark.parametrize("query, expected", [
+    ("fun", "funny"),
+    ("mem", "memes"),
+    ("test", "testing"),
+])
+def test_hashtags_found_variants(query, expected, mock_db):
+    mock_db.query_string = query
+    response = client.post("/api/hashtags/search", json={"query": query})
     assert response.status_code == 200
     data = response.json()
-    assert any("funny" == h["tag"] for h in data)
+    assert any(h["tag"] == expected for h in data)
 
-# Simulates no hashtags found
-def test_search_hashtags_not_found(mock_db):
-    mock_db.query.return_value.filter.return_value.all.return_value = []
-
+# Negative test cases:
+## Simulates no hashtags found
+def test_hashtags_not_found(mock_db):
+    mock_db.query_string = "nonexistent"
     response = client.post("/api/hashtags/search", json={"query": "nonexistent"})
+    assert response.status_code == 404
+    assert response.json() == {"detail": "No hashtags found"}
+
+# Edge cases 
+## Positive cases: Case insensitivity when searching for hashtags
+@pytest.mark.parametrize("query, expected", [
+    ("FUN", "funny"),
+    ("MEm", "memes"),
+    ("tESt", "testing")
+])
+
+def test_search_hashtags_case_insensitive(query, expected, mock_db):
+    mock_db.query_string = query
+    response = client.post("/api/hashtags/search", json={"query": query})
+    assert response.status_code == 200
+    data = response.json()
+    assert any(h["tag"] == expected for h in data)
+
+## Negative cases: Tests that you can't have no hashtag input, special characters, whitespaces, 1000 character long hashtag
+@pytest.mark.parametrize("query", ["", "$@!#", "   ", "a" * 1000])
+def test_hashtags_edge_cases_not_found(query, mock_db):
+    mock_db.query_string = query
+    response = client.post("/api/hashtags/search", json={"query": query})
     assert response.status_code == 404
     assert response.json() == {"detail": "No hashtags found"}
