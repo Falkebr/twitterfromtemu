@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class MediaBase(BaseModel):
     media_type: str
@@ -10,5 +10,4 @@ class MediaRead(MediaBase):
     id: int
     tweet_id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

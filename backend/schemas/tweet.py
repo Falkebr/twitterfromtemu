@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import List, Optional
 from .hashtag import HashtagRead
@@ -24,8 +24,7 @@ class TweetRead(TweetBase):
     hashtags: List[HashtagRead] = []
     media: List[MediaRead] = []
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TweetUpdate(BaseModel):
     content: Optional[str] = None 

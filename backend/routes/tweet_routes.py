@@ -131,6 +131,8 @@ def delete_tweets(account_id: int, tweet_id: int, db: Session = Depends(get_db),
 @router.post("/api/hashtags/search", response_model=List[HashtagRead])
 def search_hashtags(request: SearchRequest, db: Session = Depends(get_db)):
     hashtags = db.query(Hashtag).filter(Hashtag.tag.ilike(f"%{request.query}%")).all()
+    if not hashtags:
+        raise HTTPException(status_code=404, detail="No hashtags found")
     return hashtags
 
 @router.post("/api/tweets/search", response_model=List[TweetRead])
