@@ -9,27 +9,28 @@ import {
 } from '../../services/api'; 
 
 export default function SideFeed() {
-  const [accounts, setAccounts] = useState([]);
-  const [hashtags, setHashtags] = useState([]);
-  const [tweets, setTweets]     = useState([]);
+    const [accounts, setAccounts] = useState([]);
+    const [hashtags, setHashtags] = useState([]);
+    const [tweets, setTweets]     = useState([]);
 
-  const onSearch = async (q) => {
-    // exactly like your original, but using the helpers:
-    try {
-      const accountsData = await searchAccounts(q);
-      const hashtagsData = await searchHashtags(q);
-      const tweetsData   = await searchTweets(q);
+    const onSearch = async (q) => {
+        // exactly like your original, but using the helpers:
+        try {
+            const accountsData = await searchAccounts(q);
+            const hashtagsData = await searchHashtags(q);
+            const tweetsData   = await searchTweets(q);
 
-      setAccounts(Array.isArray(accountsData) ? accountsData : []);
-      setHashtags(Array.isArray(hashtagsData) ? hashtagsData : []);
-      setTweets(Array.isArray(tweetsData)     ? tweetsData     : []);
-    } catch (err) {
-      // this will only fire on non-404 errors
-      console.error('Error during search:', err);
-      // and we still fall through, but you might choose to:
-      // setAccounts([]); setHashtags([]); setTweets([]);
-    }
-  };
+            setAccounts(Array.isArray(accountsData) ? accountsData : []);
+            setHashtags(Array.isArray(hashtagsData) ? hashtagsData : []);
+            setTweets(Array.isArray(tweetsData)     ? tweetsData     : []);
+        
+        } catch (err) {
+            // this will only fire on non-404 errors
+            console.error('Error during search:', err);
+            // and we still fall through, but you might choose to:
+            // setAccounts([]); setHashtags([]); setTweets([]);
+        }
+    };
 
     return (
         <div className={styles.SideFeed}>
@@ -80,7 +81,7 @@ export default function SideFeed() {
                         <div key={tweet.id} className={styles.SideFeed__card__suggestions}>
                             <p>{tweet.content}</p>
                             <p className={styles.SideFeed__card__suggestions__handle}>
-                                - @{tweet.account.username}
+                                - @{tweet.account.handle}
                             </p>
                         </div>
                     ))}

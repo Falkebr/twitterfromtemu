@@ -61,9 +61,20 @@ def get_tweets(q: Optional[str] = Query(None), db: Session = Depends(get_db)):
 
 #Edit tweet
 @router.put("/api/{account_id}/tweets/{tweet_id}", response_model=tweet.TweetRead)
-def edit_tweets(account_id: int, tweet_id: int, edit_tweet: tweet.TweetUpdate, db: Session = Depends(get_db)):
+def edit_tweets(account_id: int, tweet_id: int, edit_tweet: tweet.TweetUpdate, db: Session = Depends(get_db), current_account: Account = Depends(get_current_user)):
     tweet = db.query(Tweet).filter(Tweet.id == tweet_id, Tweet.account_id == account_id).first()
 
+    if current_account.id != account_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You don't have access to edit tweets on this account"
+        )
+
+    tweet = (
+        db.query(Tweet)
+          .filter(Tweet.id == tweet_id, Tweet.account_id == account_id)
+          .first()
+    )
     if not tweet:
         raise HTTPException(status_code=404, detail="The tweet you wanted to update was not found")
     
@@ -135,13 +146,11 @@ def search_hashtags(request: SearchRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No hashtags found")
 
     hashtags = db.query(Hashtag).filter(Hashtag.tag.ilike(f"%{request.query}%")).all()
-    if not hashtags:
-        raise HTTPException(status_code=404, detail="No hashtags found")
     return hashtags
 
 @router.post("/api/tweets/search", response_model=List[TweetRead])
 def search_tweets(request: SearchRequest, db: Session = Depends(get_db)):
-    tweets = db.query(Tweet).filter(Tweet.content.ilike(f"%{request.query}%")).all()
+    tweets = db.query(Tweet).options(joinedload(Tweet.account)).filter(Tweet.content.ilike(f"%{request.query}%")).all()
     return tweets
 
 @router.post("/api/tweets/{tweet_id}/like")

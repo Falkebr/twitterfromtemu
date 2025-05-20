@@ -24,13 +24,8 @@ async function request(path, {
   const res = await fetch(url, opts);
 
   if (!res.ok) {
-    // swallow 404 → []
-    if (ignore404 && res.status === 404) {
-      return [];
-    }
-    // otherwise blow up
     const txt = await res.text();
-    throw new Error(`Request failed: ${res.status} ${res.statusText} – ${txt}`);
+    throw new Error(`Request failed: ${res.status} ${res.statusText} - ${txt}`);
   }
 
   return res.status === 204 ? null : res.json();
@@ -56,7 +51,7 @@ export const login = async ({ username, password }) => {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Login failed: ${res.status} ${res.statusText} – ${text}`);
+    throw new Error(`Login failed: ${res.status} ${res.statusText} - ${text}`);
   }
   return res.json(); // { access_token, token_type }
 };
@@ -121,20 +116,17 @@ export const likeTweet = (tweetId) =>
 export const searchAccounts = (q) =>
   request('/accounts/search', {
     method:    'POST',
-    body:      { query: q },
-    ignore404: true,      // ← returns [] on 404
+    body:      { query: q }
   });
 
 export const searchHashtags = (q) =>
   request('/hashtags/search', {
     method:    'POST',
-    body:      { query: q },
-    ignore404: true,
+    body:      { query: q }
   });
 
 export const searchTweets = (q) =>
   request('/tweets/search', {
     method:    'POST',
-    body:      { query: q },
-    ignore404: true,
+    body:      { query: q }
   });
