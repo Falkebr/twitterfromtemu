@@ -1,56 +1,62 @@
-import sys 
-import os
+import os 
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["SECRET_KEY"] = "testsecret"
+#DATABASE_URL = os.getenv("DATABASE_URL")
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-
+from unittest.mock import MagicMock
 import pytest 
 from fastapi.testclient import TestClient
 
 from backend.main import app 
-from backend.database import SessionLocal, Base, engine
-from backend.models import Hashtag
 from backend.routes.tweet_routes import get_db 
-from sqlalchemy.orm import Session
+from backend.models import Hashtag, Account
 
 client = TestClient(app)
 
-def override_get_db():
-    try:
-        db = SessionLocal()
-        yield db 
-    finally: 
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
-
 @pytest.fixture(scope="module")
-def test_db():
-    # Create tables if needed
-    Base.metadata.create_all(bind=engine)
+def mock_db():
+    # Create a mock db session
+    mock_session = MagicMock()
 
-    # Create a test database session and insert test data
-    db = SessionLocal()
+    # Define mock return values 
+    mock_query = MagicMock()
+    mock_session.query.return_value = mock_query 
 
-    # Some hashtags to search
-    sample_tags = ["funny", "memes", "testing"]
-    for tag in sample_tags:
-        db.add(Hashtag(tag=tag))
-    db.commit()
+    # Simulate data
+    mock_hashtag1 = MagicMock()
+    mock_hashtag1.tag = "funny"
 
-    yield db 
+    mock_hashtag2 = MagicMock()
+    mock_hashtag2.tag = "memes"
 
-    # Delete test data / clean up
-    db.query(Hashtag).filter(Hashtag.tag.in_(sample_tags)).delete(synchronize_session=False)
-    db.commit()
-    db.close()
+    mock_hashtag3 = MagicMock()
+    mock_hashtag3.tag = "testing"
 
-def test_search_hashtags_found(test_db):
+    mock_query.filter.return_value.all.return_value = [
+        mock_hashtag1, mock_hashtag2, mock_hashtag3
+    ]
+
+    yield mock_session
+
+@pytest.fixture(autouse=True)
+def override_dependency(mock_db):
+    # Reset the mock state before each test
+    mock_db.reset_mock()
+
+    def get_mock_db():
+        yield mock_db
+    app.dependency_overrides[get_db] = get_mock_db
+
+def test_search_hashtags_found():
     response = client.post("/api/hashtags/search", json={"query": "fun"})
     assert response.status_code == 200
     data = response.json()
     assert any("funny" == h["tag"] for h in data)
 
-def test_search_hashtags_not_found(test_db):
+# Simulates no hashtags found
+def test_search_hashtags_not_found(mock_db):
+    mock_db.query.return_value.filter.return_value.all.return_value = []
+
     response = client.post("/api/hashtags/search", json={"query": "nonexistent"})
     assert response.status_code == 404
     assert response.json() == {"detail": "No hashtags found"}
