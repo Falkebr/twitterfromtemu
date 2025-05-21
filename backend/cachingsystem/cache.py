@@ -3,6 +3,14 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import time
 import requests
+import os
+
+# JWT decoding to get username for /accounts/me cache key
+try:
+    from jose import jwt, JWTError
+except ImportError:
+    jwt = None
+    JWTError = Exception
 
 app = FastAPI()
 
@@ -32,6 +40,9 @@ cache = Cache()
 class CacheItem(BaseModel):
     key: str
     value: str
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dummysecretkey")
+ALGORITHM = "HS256"
 
 @app.get("/cache/{key}")
 def get_cache(key: str):
@@ -66,9 +77,67 @@ def get_tweets():
         print(f"[CACHE] Exception contacting API: {e}")
         return {"error": "Could not contact API", "details": str(e)}, 502
 
+@app.get("/api/accounts")
+def get_accounts():
+    cached = cache.get("accounts")
+    if cached is not None:
+        print("[CACHE] HIT for /api/accounts")
+        return cached
+    print("[CACHE] MISS for /api/accounts, fetching from API...")
+    try:
+        resp = requests.get("http://api:8000/api/accounts", timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            cache.set("accounts", data)
+            print("[CACHE] Stored new data for /api/accounts")
+            return data
+        else:
+            print(f"[CACHE] API returned status {resp.status_code}: {resp.text}")
+            return {"error": f"API error: {resp.status_code}", "details": resp.text}, resp.status_code
+    except Exception as e:
+        print(f"[CACHE] Exception contacting API: {e}")
+        return {"error": "Could not contact API", "details": str(e)}, 502
+
+@app.get("/api/accounts/me")
+def get_accounts_me(request: Request):
+    auth = request.headers.get("authorization")
+    if not auth or not auth.startswith("Bearer "):
+        return {"error": "Missing or invalid token"}, 401
+    token = auth.split(" ", 1)[1]
+    # Try to decode the JWT to get the username for cache key
+    # If decoding fails, use the token as the cache key
+    cache_key = f"accounts_me:{token}"
+    if jwt is not None:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username = payload.get("sub")
+            if username:
+                cache_key = f"accounts_me:{username}"
+        except JWTError:
+            pass
+    cached = cache.get(cache_key)
+    if cached is not None:
+        print(f"[CACHE] HIT for /api/accounts/me ({cache_key})")
+        return cached
+    print(f"[CACHE] MISS for /api/accounts/me ({cache_key}), fetching from API...")
+    try:
+        headers = {"Authorization": auth}
+        resp = requests.get("http://api:8000/api/accounts/me", headers=headers, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            cache.set(cache_key, data)
+            print(f"[CACHE] Stored new data for /api/accounts/me ({cache_key})")
+            return data
+        else:
+            print(f"[CACHE] API returned status {resp.status_code}: {resp.text}")
+            return {"error": f"API error: {resp.status_code}", "details": resp.text}, resp.status_code
+    except Exception as e:
+        print(f"[CACHE] Exception contacting API: {e}")
+        return {"error": "Could not contact API", "details": str(e)}, 502
+
 @app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def proxy_api(path: str, request: Request):
-    # Special case: cache GET /api/tweets
+    # cache GET /api/tweets
     if request.method == "GET" and path == "tweets":
         cached = cache.get("tweets")
         if cached is not None:
@@ -88,7 +157,61 @@ async def proxy_api(path: str, request: Request):
         except Exception as e:
             print(f"[CACHE] Exception contacting API: {e}")
             return JSONResponse(content={"error": "Could not contact API", "details": str(e)}, status_code=502)
-    # Proxy all other /api/* requests to the API service
+    # cache GET /api/accounts
+    if request.method == "GET" and path == "accounts":
+        cached = cache.get("accounts")
+        if cached is not None:
+            print("[CACHE] HIT for /api/accounts")
+            return cached
+        print("[CACHE] MISS for /api/accounts, fetching from API...")
+        try:
+            resp = requests.get(f"http://api:8000/api/accounts", timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                cache.set("accounts", data)
+                print("[CACHE] Stored new data for /api/accounts")
+                return data
+            else:
+                print(f"[CACHE] API returned status {resp.status_code}: {resp.text}")
+                return JSONResponse(content={"error": f"API error: {resp.status_code}", "details": resp.text}, status_code=resp.status_code)
+        except Exception as e:
+            print(f"[CACHE] Exception contacting API: {e}")
+            return JSONResponse(content={"error": "Could not contact API", "details": str(e)}, status_code=502)
+    # cache GET /api/accounts/me
+    if request.method == "GET" and path == "accounts/me":
+        auth = request.headers.get("authorization")
+        if not auth or not auth.startswith("Bearer "):
+            return JSONResponse(content={"error": "Missing or invalid token"}, status_code=401)
+        token = auth.split(" ", 1)[1]
+        cache_key = f"accounts_me:{token}"
+        if jwt is not None:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                username = payload.get("sub")
+                if username:
+                    cache_key = f"accounts_me:{username}"
+            except JWTError:
+                pass
+        cached = cache.get(cache_key)
+        if cached is not None:
+            print(f"[CACHE] HIT for /api/accounts/me ({cache_key})")
+            return cached
+        print(f"[CACHE] MISS for /api/accounts/me ({cache_key}), fetching from API...")
+        try:
+            headers = {"Authorization": auth}
+            resp = requests.get(f"http://api:8000/api/accounts/me", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                cache.set(cache_key, data)
+                print(f"[CACHE] Stored new data for /api/accounts/me ({cache_key})")
+                return data
+            else:
+                print(f"[CACHE] API returned status {resp.status_code}: {resp.text}")
+                return JSONResponse(content={"error": f"API error: {resp.status_code}", "details": resp.text}, status_code=resp.status_code)
+        except Exception as e:
+            print(f"[CACHE] Exception contacting API: {e}")
+            return JSONResponse(content={"error": "Could not contact API", "details": str(e)}, status_code=502)
+    # Proxy all other /api/ requests to the API service
     api_url = f"http://api:8000/api/{path}"
     try:
         method = request.method
